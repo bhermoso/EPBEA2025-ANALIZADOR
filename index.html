@@ -1,0 +1,1573 @@
+<!DOCTYPE html>
+<!--
+================================================================================
+I ENCUESTA POPULAR DE BIENESTAR EMOCIONAL DE ATARFE
+Herramienta de Análisis de Resultados
+================================================================================
+
+Instituciones:
+- Ayuntamiento de Atarfe
+- Distrito Sanitario Granada-Metropolitano
+
+Año: 2025
+Licencia: MIT
+Datos: Propiedad del Distrito Sanitario Granada-Metropolitano
+
+Características:
+- Análisis poblacional de bienestar emocional
+- Índice ISBE (Índice de Salud y Bienestar Emocional)
+- Escala WHO-5 de la OMS
+- Análisis por edad y sexo
+- Interpretaciones en lenguaje natural
+- Visualizaciones profesionales
+- Procesamiento 100% local (privacidad total)
+
+================================================================================
+-->
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>I Encuesta Popular de Bienestar Emocional de Atarfe 2025</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0051A5 0%, #00A0DC 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #0051A5 0%, #00A0DC 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.95;
+        }
+
+        .upload-section {
+            padding: 40px;
+            text-align: center;
+            background: #f8f9fa;
+            border-bottom: 3px solid #0051A5;
+        }
+
+        .upload-box {
+            border: 3px dashed #0051A5;
+            border-radius: 15px;
+            padding: 40px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+
+        .upload-box:hover {
+            border-color: #00A0DC;
+            background: #f8f9fa;
+            transform: translateY(-2px);
+        }
+
+        .upload-box.dragover {
+            background: #e3e7ff;
+            border-color: #00A0DC;
+        }
+
+        .upload-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #0051A5 0%, #00A0DC 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 50px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .results {
+            display: none;
+            padding: 40px;
+        }
+
+        .section {
+            margin-bottom: 40px;
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .section-title {
+            font-size: 1.8em;
+            color: #0051A5;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #0051A5;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .metric-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .metric-card {
+            background: linear-gradient(135deg, #0051A5 0%, #00A0DC 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+            transition: transform 0.3s ease;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .metric-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+            margin-bottom: 10px;
+        }
+
+        .metric-value {
+            font-size: 2.5em;
+            font-weight: bold;
+        }
+
+        .metric-subtitle {
+            font-size: 0.85em;
+            opacity: 0.85;
+            margin-top: 5px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin: 30px 0;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+            margin: 20px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        th {
+            background: linear-gradient(135deg, #0051A5 0%, #00A0DC 100%);
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        .alert {
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .alert-info {
+            background: #e3f2fd;
+            border-left: 5px solid #2196F3;
+            color: #1565c0;
+        }
+
+        .alert-warning {
+            background: #fff3e0;
+            border-left: 5px solid #ff9800;
+            color: #e65100;
+        }
+
+        .alert-success {
+            background: #e8f5e9;
+            border-left: 5px solid #4caf50;
+            color: #2e7d32;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+
+        .badge-low {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .badge-moderate {
+            background: #fff3e0;
+            color: #e65100;
+        }
+
+        .badge-good {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .badge-excellent {
+            background: #e3f2fd;
+            color: #1565c0;
+        }
+
+        .stats-box {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .stat-item {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #0051A5;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .export-section {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%);
+            margin: 0 10px;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #0051A5;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .footer {
+            background: #2c3e50;
+            color: white;
+            text-align: center;
+            padding: 30px;
+            margin-top: 40px;
+        }
+
+        @media print {
+            .upload-section, .export-section, .btn {
+                display: none;
+            }
+            .results {
+                display: block !important;
+            }
+            body {
+                background: white;
+            }
+        }
+
+        @media (max-width: 968px) {
+            .semaforo-container {
+                flex-direction: column;
+            }
+            
+            .semaforo-vertical {
+                width: 100%;
+            }
+            
+            .semaforo-detalles {
+                padding-left: 0;
+                width: 100%;
+            }
+
+            .isbe-valor-numero {
+                font-size: 3em;
+            }
+
+            .semaforo-porcentaje {
+                font-size: 2em;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .semaforo-nivel {
+                padding: 15px;
+            }
+
+            .semaforo-icono {
+                font-size: 2em;
+                min-width: 40px;
+            }
+
+            .semaforo-label {
+                font-size: 1.1em;
+            }
+
+            .semaforo-porcentaje {
+                font-size: 1.8em;
+            }
+        }
+
+        .correlation-matrix {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 5px;
+            margin: 20px 0;
+        }
+
+        .corr-cell {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 5px;
+            font-weight: bold;
+            font-size: 0.85em;
+        }
+
+        .priority-box {
+            background: #ffebee;
+            border-left: 5px solid #c62828;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        .priority-title {
+            color: #c62828;
+            font-size: 1.3em;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .semaforo-container {
+            display: flex;
+            gap: 40px;
+            align-items: center;
+            margin: 30px 0;
+            padding: 30px;
+            background: #f8f9fa;
+            border-radius: 15px;
+        }
+
+        .semaforo-vertical {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            background: white;
+            border-radius: 20px;
+            padding: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            min-width: 200px;
+        }
+
+        .semaforo-nivel {
+            display: flex;
+            align-items: center;
+            padding: 20px;
+            border-radius: 12px;
+            margin: 5px 0;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .semaforo-nivel:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+        }
+
+        .semaforo-nivel.nivel-muy-bueno {
+            background: linear-gradient(135deg, #2196F3 0%, #03a9f4 100%);
+        }
+
+        .semaforo-nivel.nivel-bueno {
+            background: linear-gradient(135deg, #4caf50 0%, #8bc34a 100%);
+        }
+
+        .semaforo-nivel.nivel-moderado {
+            background: linear-gradient(135deg, #ff9800 0%, #ff5722 100%);
+        }
+
+        .semaforo-nivel.nivel-bajo {
+            background: linear-gradient(135deg, #f44336 0%, #e91e63 100%);
+        }
+
+        .semaforo-icono {
+            font-size: 2.5em;
+            margin-right: 15px;
+            min-width: 50px;
+            text-align: center;
+        }
+
+        .semaforo-info {
+            flex: 1;
+            color: white;
+        }
+
+        .semaforo-label {
+            font-size: 1.3em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .semaforo-rango {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        .semaforo-stats {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            align-items: flex-end;
+        }
+
+        .semaforo-porcentaje {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: white;
+            line-height: 1;
+        }
+
+        .semaforo-n {
+            font-size: 0.85em;
+            opacity: 0.85;
+            color: white;
+        }
+
+        .semaforo-detalles {
+            flex: 1;
+            padding-left: 30px;
+        }
+
+        .isbe-resumen {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .isbe-valor-principal {
+            text-align: center;
+            padding: 30px;
+            background: linear-gradient(135deg, #0051A5 0%, #00A0DC 100%);
+            color: white;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+
+        .isbe-valor-numero {
+            font-size: 4em;
+            font-weight: bold;
+            line-height: 1;
+        }
+
+        .isbe-valor-label {
+            font-size: 1.2em;
+            margin-top: 10px;
+            opacity: 0.95;
+        }
+
+        .isbe-estadisticos {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .isbe-stat-item {
+            text-align: center;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .isbe-stat-label {
+            font-size: 0.85em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .isbe-stat-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #0051A5;
+        }
+
+        .interpretacion-box {
+            background: #e3f2fd;
+            border-left: 5px solid #2196F3;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
+        .interpretacion-titulo {
+            font-weight: bold;
+            color: #1565c0;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        .interpretacion-texto {
+            color: #1565c0;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>I Encuesta Popular de Bienestar Emocional de Atarfe</h1>
+            <p style="font-size: 1.1em; margin-top: 15px;">📊 Herramienta de Análisis de Resultados</p>
+            <p style="font-size: 0.95em; margin-top: 10px; opacity: 0.9;">
+                Ayuntamiento de Atarfe · Distrito Sanitario Granada-Metropolitano · 2025
+            </p>
+        </div>
+
+        <div class="upload-section">
+            <div class="upload-box" id="uploadBox">
+                <div class="upload-icon">📁</div>
+                <h2>Cargar archivo CSV</h2>
+                <p style="margin: 15px 0; color: #666;">
+                    Arrastra y suelta tu archivo CSV aquí o haz clic para seleccionar
+                </p>
+                <input type="file" id="fileInput" accept=".csv" />
+                <button class="btn" onclick="document.getElementById('fileInput').click()">
+                    Seleccionar archivo
+                </button>
+            </div>
+            <div class="alert alert-info">
+                <strong>📋 Formato esperado:</strong> El CSV debe contener las variables de la encuesta de bienestar emocional 
+                (sexo, edad, who5_1 a who5_5, salud_fisica, salud_mental, satisfaccion_vida).
+            </div>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Analizando datos...</p>
+        </div>
+
+        <div class="results" id="results">
+            <!-- Los resultados se generarán dinámicamente aquí -->
+        </div>
+
+        <div class="footer">
+            <p><strong>I Encuesta Popular de Bienestar Emocional de Atarfe</strong></p>
+            <p style="margin-top: 10px; opacity: 0.8;">
+                Herramienta de análisis automatizado | © 2025 Ayuntamiento de Atarfe
+            </p>
+        </div>
+    </div>
+
+    <script>
+        let data = [];
+        let charts = {};
+
+        // Configuración de drag & drop
+        const uploadBox = document.getElementById('uploadBox');
+        const fileInput = document.getElementById('fileInput');
+
+        uploadBox.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadBox.classList.add('dragover');
+        });
+
+        uploadBox.addEventListener('dragleave', () => {
+            uploadBox.classList.remove('dragover');
+        });
+
+        uploadBox.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadBox.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (file && file.name.endsWith('.csv')) {
+                processFile(file);
+            } else {
+                alert('Por favor, sube un archivo CSV válido');
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                processFile(file);
+            }
+        });
+
+        function processFile(file) {
+            document.getElementById('loading').style.display = 'block';
+            document.querySelector('.upload-section').style.display = 'none';
+
+            Papa.parse(file, {
+                header: true,
+                dynamicTyping: true,
+                complete: function(results) {
+                    data = results.data.filter(row => row.record_id); // Filtrar filas vacías
+                    setTimeout(() => {
+                        analyzeData();
+                        document.getElementById('loading').style.display = 'none';
+                        document.getElementById('results').style.display = 'block';
+                    }, 1000);
+                },
+                error: function(error) {
+                    alert('Error al leer el archivo: ' + error.message);
+                    document.getElementById('loading').style.display = 'none';
+                    document.querySelector('.upload-section').style.display = 'block';
+                }
+            });
+        }
+
+        function analyzeData() {
+            // Calcular todas las métricas necesarias
+            const metrics = calculateMetrics();
+            
+            // Generar el HTML de resultados
+            generateResultsHTML(metrics);
+            
+            // Crear todos los gráficos
+            createAllCharts(metrics);
+        }
+
+        function calculateMetrics() {
+            const n = data.length;
+            
+            // Calcular campos derivados si no existen
+            data = data.map(row => {
+                if (!row.who5_total) {
+                    row.who5_total = (row.who5_1 || 0) + (row.who5_2 || 0) + (row.who5_3 || 0) + 
+                                     (row.who5_4 || 0) + (row.who5_5 || 0);
+                }
+                if (!row.who5_porcentaje) {
+                    row.who5_porcentaje = row.who5_total * 4;
+                }
+                if (!row.isbe_total) {
+                    const comp_who5 = row.who5_porcentaje * 0.5;
+                    const comp_auto = ((row.salud_fisica + row.salud_mental + row.satisfaccion_vida) / 15) * 100 * 0.5;
+                    row.isbe_total = comp_who5 + comp_auto;
+                }
+                if (!row.isbe_clasificacion) {
+                    if (row.isbe_total < 40) row.isbe_clasificacion = 'Bajo';
+                    else if (row.isbe_total < 60) row.isbe_clasificacion = 'Moderado';
+                    else if (row.isbe_total < 75) row.isbe_clasificacion = 'Bueno';
+                    else row.isbe_clasificacion = 'Muy Bueno';
+                }
+                return row;
+            });
+
+            const metrics = {
+                n: n,
+                // Demografía
+                nHombres: data.filter(r => r.sexo === 0).length,
+                nMujeres: data.filter(r => r.sexo === 1).length,
+                edadMedia: mean(data.map(r => r.edad)),
+                edadDE: std(data.map(r => r.edad)),
+                edadMediana: median(data.map(r => r.edad)),
+                edadMin: Math.min(...data.map(r => r.edad)),
+                edadMax: Math.max(...data.map(r => r.edad)),
+                
+                // WHO-5
+                who5Media: mean(data.map(r => r.who5_porcentaje)),
+                who5DE: std(data.map(r => r.who5_porcentaje)),
+                who5Mediana: median(data.map(r => r.who5_porcentaje)),
+                who5Bajo: data.filter(r => r.who5_porcentaje < 50).length,
+                who5BajoH: data.filter(r => r.sexo === 0 && r.who5_porcentaje < 50).length,
+                who5BajoM: data.filter(r => r.sexo === 1 && r.who5_porcentaje < 50).length,
+                who5MediaH: mean(data.filter(r => r.sexo === 0).map(r => r.who5_porcentaje)),
+                who5MediaM: mean(data.filter(r => r.sexo === 1).map(r => r.who5_porcentaje)),
+                
+                // ISBE
+                isbeMedia: mean(data.map(r => r.isbe_total)),
+                isbeDE: std(data.map(r => r.isbe_total)),
+                isbeMediana: median(data.map(r => r.isbe_total)),
+                isbeP25: percentile(data.map(r => r.isbe_total), 25),
+                isbeP75: percentile(data.map(r => r.isbe_total), 75),
+                isbeBajo: data.filter(r => r.isbe_total < 40).length,
+                isbeModerado: data.filter(r => r.isbe_clasificacion === 'Moderado').length,
+                isbeBueno: data.filter(r => r.isbe_clasificacion === 'Bueno').length,
+                isbeMuyBueno: data.filter(r => r.isbe_clasificacion === 'Muy Bueno').length,
+                isbeMediaH: mean(data.filter(r => r.sexo === 0).map(r => r.isbe_total)),
+                isbeMediaM: mean(data.filter(r => r.sexo === 1).map(r => r.isbe_total)),
+                
+                // Autopercepción
+                saludFisicaMedia: mean(data.map(r => r.salud_fisica)),
+                saludMentalMedia: mean(data.map(r => r.salud_mental)),
+                satisfaccionMedia: mean(data.map(r => r.satisfaccion_vida)),
+                saludMentalMala: data.filter(r => r.salud_mental <= 2).length,
+                insatisfaccion: data.filter(r => r.satisfaccion_vida <= 2).length
+            };
+
+            // Grupos de edad
+            metrics.gruposEdad = calculateAgeGroups();
+            
+            return metrics;
+        }
+
+        function calculateAgeGroups() {
+            const groups = {
+                '16-24': data.filter(r => r.edad >= 16 && r.edad <= 24),
+                '25-34': data.filter(r => r.edad >= 25 && r.edad <= 34),
+                '35-44': data.filter(r => r.edad >= 35 && r.edad <= 44),
+                '45-54': data.filter(r => r.edad >= 45 && r.edad <= 54),
+                '55-64': data.filter(r => r.edad >= 55 && r.edad <= 64),
+                '65-74': data.filter(r => r.edad >= 65 && r.edad <= 74),
+                '75+': data.filter(r => r.edad >= 75)
+            };
+
+            const result = {};
+            for (let [grupo, datos] of Object.entries(groups)) {
+                result[grupo] = {
+                    n: datos.length,
+                    who5Media: mean(datos.map(r => r.who5_porcentaje)),
+                    who5DE: std(datos.map(r => r.who5_porcentaje)),
+                    isbeMedia: mean(datos.map(r => r.isbe_total)),
+                    isbeDE: std(datos.map(r => r.isbe_total)),
+                    isbeBajo: datos.filter(r => r.isbe_total < 40).length,
+                    isbeModerado: datos.filter(r => r.isbe_clasificacion === 'Moderado').length,
+                    isbeBueno: datos.filter(r => r.isbe_clasificacion === 'Bueno').length,
+                    isbeMuyBueno: datos.filter(r => r.isbe_clasificacion === 'Muy Bueno').length
+                };
+            }
+            return result;
+        }
+
+        function generateResultsHTML(metrics) {
+            const resultsDiv = document.getElementById('results');
+            
+            let html = `
+                <!-- RESUMEN GENERAL -->
+                <div class="section">
+                    <div class="section-title">
+                        📊 Resumen General de la Muestra
+                    </div>
+                    
+                    <div class="metric-grid">
+                        <div class="metric-card">
+                            <div class="metric-label">Total Participantes</div>
+                            <div class="metric-value">${metrics.n}</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-label">Hombres</div>
+                            <div class="metric-value">${metrics.nHombres}</div>
+                            <div class="metric-subtitle">${((metrics.nHombres/metrics.n)*100).toFixed(1)}%</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-label">Mujeres</div>
+                            <div class="metric-value">${metrics.nMujeres}</div>
+                            <div class="metric-subtitle">${((metrics.nMujeres/metrics.n)*100).toFixed(1)}%</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-label">Edad Media</div>
+                            <div class="metric-value">${metrics.edadMedia.toFixed(1)}</div>
+                            <div class="metric-subtitle">años (DE: ${metrics.edadDE.toFixed(1)})</div>
+                        </div>
+                    </div>
+
+                    <div class="stats-box">
+                        <div class="stat-item">
+                            <div class="stat-label">Mediana de edad</div>
+                            <div class="stat-value">${metrics.edadMediana.toFixed(0)} años</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Rango de edad</div>
+                            <div class="stat-value">${metrics.edadMin}-${metrics.edadMax}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- WHO-5 -->
+                <div class="section">
+                    <div class="section-title">
+                        😊 Escala WHO-5 de Bienestar Emocional (OMS)
+                    </div>
+                    
+                    <div class="metric-grid">
+                        <div class="metric-card">
+                            <div class="metric-label">WHO-5 Media</div>
+                            <div class="metric-value">${metrics.who5Media.toFixed(1)}%</div>
+                            <div class="metric-subtitle">DE: ${metrics.who5DE.toFixed(1)}</div>
+                        </div>
+                        <div class="metric-card" style="background: ${metrics.who5Bajo/metrics.n > 0.4 ? 'linear-gradient(135deg, #f44336 0%, #e91e63 100%)' : 'linear-gradient(135deg, #ff9800 0%, #ff5722 100%)'}">
+                            <div class="metric-label">Bajo Bienestar (<50%)</div>
+                            <div class="metric-value">${metrics.who5Bajo}</div>
+                            <div class="metric-subtitle">${((metrics.who5Bajo/metrics.n)*100).toFixed(1)}% de la muestra</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-label">WHO-5 Hombres</div>
+                            <div class="metric-value">${metrics.who5MediaH.toFixed(1)}%</div>
+                            <div class="metric-subtitle">${metrics.who5BajoH} con bajo bienestar</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-label">WHO-5 Mujeres</div>
+                            <div class="metric-value">${metrics.who5MediaM.toFixed(1)}%</div>
+                            <div class="metric-subtitle">${metrics.who5BajoM} con bajo bienestar</div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-warning">
+                        <strong>⚠️ Diferencia por sexo:</strong> 
+                        ${(metrics.who5MediaH - metrics.who5MediaM).toFixed(2)} puntos a favor de ${metrics.who5MediaH > metrics.who5MediaM ? 'hombres' : 'mujeres'}
+                        (${((metrics.who5BajoM/metrics.nMujeres)*100).toFixed(1)}% mujeres vs ${((metrics.who5BajoH/metrics.nHombres)*100).toFixed(1)}% hombres con bajo bienestar)
+                    </div>
+
+                    <div class="chart-container">
+                        <canvas id="chartWHO5Edad"></canvas>
+                    </div>
+
+                    <div class="alert alert-info" style="margin-top: 20px;">
+                        <strong>💡 Interpretación:</strong> Este gráfico muestra cómo varía el bienestar emocional (WHO-5) según la edad. 
+                        ${(() => {
+                            const grupos = Object.entries(metrics.gruposEdad).sort((a,b) => {
+                                const orden = {'16-24':1,'25-34':2,'35-44':3,'45-54':4,'55-64':5,'65-74':6,'75+':7};
+                                return orden[a[0]] - orden[b[0]];
+                            });
+                            const maxGrupo = grupos.reduce((max, g) => g[1].who5Media > max[1].who5Media ? g : max, grupos[0]);
+                            const minGrupo = grupos.reduce((min, g) => g[1].who5Media < min[1].who5Media ? g : min, grupos[0]);
+                            const diferencia = maxGrupo[1].who5Media - minGrupo[1].who5Media;
+                            
+                            return `El grupo con <strong>mayor bienestar</strong> es ${maxGrupo[0]} años (${maxGrupo[1].who5Media.toFixed(1)}%), 
+                                    mientras que el grupo con <strong>menor bienestar</strong> es ${minGrupo[0]} años (${minGrupo[1].who5Media.toFixed(1)}%). 
+                                    Existe una diferencia de <strong>${diferencia.toFixed(1)} puntos porcentuales</strong> entre ambos grupos, 
+                                    lo que ${diferencia > 15 ? 'indica una brecha significativa' : diferencia > 8 ? 'sugiere diferencias considerables' : 'muestra variación moderada'} 
+                                    en el bienestar según la edad.`;
+                        })()}
+                    </div>
+
+                    <div class="chart-container">
+                        <canvas id="chartWHO5Sexo"></canvas>
+                    </div>
+
+                    <div class="alert alert-warning" style="margin-top: 20px;">
+                        <strong>⚖️ Análisis por sexo:</strong> 
+                        ${(() => {
+                            const dif = Math.abs(metrics.who5MediaH - metrics.who5MediaM);
+                            const mejor = metrics.who5MediaH > metrics.who5MediaM ? 'hombres' : 'mujeres';
+                            const peor = metrics.who5MediaH < metrics.who5MediaM ? 'hombres' : 'mujeres';
+                            
+                            if (dif < 3) {
+                                return `Los niveles de bienestar son <strong>similares</strong> entre hombres y mujeres (diferencia de ${dif.toFixed(1)} puntos), 
+                                        lo que sugiere que el sexo no es un factor diferencial importante en esta población.`;
+                            } else if (dif < 8) {
+                                return `Existe una diferencia <strong>moderada</strong> de ${dif.toFixed(1)} puntos a favor de ${mejor}, 
+                                        lo que merece atención en las políticas de intervención dirigidas a ${peor}.`;
+                            } else {
+                                return `Se observa una <strong>brecha significativa</strong> de ${dif.toFixed(1)} puntos a favor de ${mejor}. 
+                                        Esta diferencia es considerable y sugiere la necesidad de intervenciones específicas para ${peor}, 
+                                        considerando determinantes sociales de género.`;
+                            }
+                        })()}
+                    </div>
+                </div>
+
+                <!-- ISBE -->
+                <div class="section">
+                    <div class="section-title">
+                        ✨ Índice Sintético de Bienestar Emocional (ISBE)
+                    </div>
+                    
+                    <div class="isbe-resumen">
+                        <div class="isbe-valor-principal">
+                            <div class="isbe-valor-numero">${metrics.isbeMedia.toFixed(1)}</div>
+                            <div class="isbe-valor-label">ISBE Medio Poblacional (0-100)</div>
+                        </div>
+                        
+                        <div class="isbe-estadisticos">
+                            <div class="isbe-stat-item">
+                                <div class="isbe-stat-label">Mediana</div>
+                                <div class="isbe-stat-value">${metrics.isbeMediana.toFixed(1)}</div>
+                            </div>
+                            <div class="isbe-stat-item">
+                                <div class="isbe-stat-label">Desv. Estándar</div>
+                                <div class="isbe-stat-value">${metrics.isbeDE.toFixed(1)}</div>
+                            </div>
+                            <div class="isbe-stat-item">
+                                <div class="isbe-stat-label">Percentil 25</div>
+                                <div class="isbe-stat-value">${metrics.isbeP25.toFixed(1)}</div>
+                            </div>
+                            <div class="isbe-stat-item">
+                                <div class="isbe-stat-label">Percentil 75</div>
+                                <div class="isbe-stat-value">${metrics.isbeP75.toFixed(1)}</div>
+                            </div>
+                            <div class="isbe-stat-item">
+                                <div class="isbe-stat-label">ISBE Hombres</div>
+                                <div class="isbe-stat-value">${metrics.isbeMediaH.toFixed(1)}</div>
+                            </div>
+                            <div class="isbe-stat-item">
+                                <div class="isbe-stat-label">ISBE Mujeres</div>
+                                <div class="isbe-stat-value">${metrics.isbeMediaM.toFixed(1)}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h3 style="margin: 30px 0 20px 0; color: #0051A5; font-size: 1.3em;">📊 Distribución de la Población por Nivel de Bienestar</h3>
+                    
+                    <div class="semaforo-container">
+                        <div class="semaforo-vertical">
+                            <div class="semaforo-nivel nivel-muy-bueno">
+                                <div class="semaforo-icono">🔵</div>
+                                <div class="semaforo-info">
+                                    <div class="semaforo-label">Muy Bueno</div>
+                                    <div class="semaforo-rango">75 - 100</div>
+                                </div>
+                                <div class="semaforo-stats">
+                                    <div class="semaforo-porcentaje">${((metrics.isbeMuyBueno/metrics.n)*100).toFixed(1)}%</div>
+                                    <div class="semaforo-n">N=${metrics.isbeMuyBueno}</div>
+                                </div>
+                            </div>
+                            
+                            <div class="semaforo-nivel nivel-bueno">
+                                <div class="semaforo-icono">🟢</div>
+                                <div class="semaforo-info">
+                                    <div class="semaforo-label">Bueno</div>
+                                    <div class="semaforo-rango">60 - 74</div>
+                                </div>
+                                <div class="semaforo-stats">
+                                    <div class="semaforo-porcentaje">${((metrics.isbeBueno/metrics.n)*100).toFixed(1)}%</div>
+                                    <div class="semaforo-n">N=${metrics.isbeBueno}</div>
+                                </div>
+                            </div>
+                            
+                            <div class="semaforo-nivel nivel-moderado">
+                                <div class="semaforo-icono">🟡</div>
+                                <div class="semaforo-info">
+                                    <div class="semaforo-label">Moderado</div>
+                                    <div class="semaforo-rango">40 - 59</div>
+                                </div>
+                                <div class="semaforo-stats">
+                                    <div class="semaforo-porcentaje">${((metrics.isbeModerado/metrics.n)*100).toFixed(1)}%</div>
+                                    <div class="semaforo-n">N=${metrics.isbeModerado}</div>
+                                </div>
+                            </div>
+                            
+                            <div class="semaforo-nivel nivel-bajo">
+                                <div class="semaforo-icono">🔴</div>
+                                <div class="semaforo-info">
+                                    <div class="semaforo-label">Bajo</div>
+                                    <div class="semaforo-rango">0 - 39</div>
+                                </div>
+                                <div class="semaforo-stats">
+                                    <div class="semaforo-porcentaje">${((metrics.isbeBajo/metrics.n)*100).toFixed(1)}%</div>
+                                    <div class="semaforo-n">N=${metrics.isbeBajo}</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="semaforo-detalles">
+                            <div class="interpretacion-box">
+                                <div class="interpretacion-titulo">📈 Interpretación del ISBE</div>
+                                <div class="interpretacion-texto">
+                                    <p style="margin-bottom: 15px;">
+                                        <strong>Bienestar Positivo:</strong> El ${((metrics.isbeBueno + metrics.isbeMuyBueno)/metrics.n*100).toFixed(1)}% 
+                                        de la población presenta un bienestar emocional <strong>bueno o muy bueno</strong>.
+                                    </p>
+                                    <p style="margin-bottom: 15px;">
+                                        <strong>Bienestar Mejorable:</strong> El ${((metrics.isbeModerado)/metrics.n*100).toFixed(1)}% 
+                                        se encuentra en nivel <strong>moderado</strong>, con espacio para intervenciones preventivas.
+                                    </p>
+                                    <p style="margin-bottom: 0;">
+                                        <strong>⚠️ Atención Prioritaria:</strong> El ${((metrics.isbeBajo)/metrics.n*100).toFixed(1)}% 
+                                        (${metrics.isbeBajo} personas) presenta bienestar <strong>deficiente</strong> y requiere atención especializada.
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            <div style="margin-top: 20px; padding: 15px; background: #fff3e0; border-radius: 10px; border-left: 5px solid #ff9800;">
+                                <strong style="color: #e65100;">💡 Dato clave:</strong>
+                                <span style="color: #e65100;">
+                                    Los hombres presentan un ISBE medio de ${metrics.isbeMediaH.toFixed(1)} puntos, 
+                                    ${(metrics.isbeMediaH - metrics.isbeMediaM).toFixed(1)} puntos superior al de las mujeres 
+                                    (${metrics.isbeMediaM.toFixed(1)} puntos).
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="chart-container">
+                        <canvas id="chartISBEDistribucion"></canvas>
+                    </div>
+
+                    <div class="alert alert-success" style="margin-top: 20px;">
+                        <strong>📊 Distribución poblacional:</strong> 
+                        ${(() => {
+                            const porcBuenos = ((metrics.isbeBueno + metrics.isbeMuyBueno) / metrics.n * 100).toFixed(1);
+                            const porcModerado = (metrics.isbeModerado / metrics.n * 100).toFixed(1);
+                            const porcBajo = (metrics.isbeBajo / metrics.n * 100).toFixed(1);
+                            
+                            if (parseFloat(porcBuenos) > 60) {
+                                return `La mayoría de la población (<strong>${porcBuenos}%</strong>) presenta niveles de bienestar buenos o muy buenos, 
+                                        lo que refleja un estado general <strong>favorable</strong>. Sin embargo, el ${porcModerado}% en nivel moderado 
+                                        y el ${porcBajo}% con ISBE deficiente requieren atención preventiva.`;
+                            } else if (parseFloat(porcModerado) > 40) {
+                                return `Un <strong>${porcModerado}%</strong> de la población está en nivel moderado de bienestar, lo que indica 
+                                        <strong>riesgo de deterioro</strong>. Es fundamental fortalecer factores protectores en este grupo. 
+                                        El ${porcBajo}% con ISBE deficiente requiere intervención inmediata.`;
+                            } else {
+                                return `La distribución muestra ${porcBuenos}% en niveles buenos, ${porcModerado}% en nivel moderado y 
+                                        <strong>${porcBajo}% con ISBE deficiente</strong>. Esta última cifra es prioritaria para políticas de salud mental.`;
+                            }
+                        })()}
+                    </div>
+
+                    <div class="chart-container">
+                        <canvas id="chartISBEEdad"></canvas>
+                    </div>
+
+                    <div class="alert alert-info" style="margin-top: 20px;">
+                        <strong>👥 Gradiente por edad:</strong> 
+                        ${(() => {
+                            const grupos = Object.entries(metrics.gruposEdad).sort((a,b) => {
+                                const orden = {'16-24':1,'25-34':2,'35-44':3,'45-54':4,'55-64':5,'65-74':6,'75+':7};
+                                return orden[a[0]] - orden[b[0]];
+                            });
+                            const jovenes = grupos.slice(0, 2);
+                            const mayores = grupos.slice(-2);
+                            const isbeJovenes = jovenes.reduce((sum, g) => sum + g[1].isbeMedia * g[1].n, 0) / jovenes.reduce((sum, g) => sum + g[1].n, 0);
+                            const isbeMayores = mayores.reduce((sum, g) => sum + g[1].isbeMedia * g[1].n, 0) / mayores.reduce((sum, g) => sum + g[1].n, 0);
+                            const diferencia = isbeJovenes - isbeMayores;
+                            
+                            if (diferencia > 10) {
+                                return `Se observa un <strong>deterioro muy significativo</strong> del bienestar con la edad (${diferencia.toFixed(1)} puntos de diferencia). 
+                                        Los jóvenes tienen un ISBE medio de ${isbeJovenes.toFixed(1)}, mientras que los mayores de 65 años tienen ${isbeMayores.toFixed(1)}. 
+                                        Esto exige programas de <strong>envejecimiento activo</strong> y prevención del aislamiento social.`;
+                            } else if (diferencia > 5) {
+                                return `Existe un gradiente descendente moderado (${diferencia.toFixed(1)} puntos) desde jóvenes (${isbeJovenes.toFixed(1)}) 
+                                        hacia mayores (${isbeMayores.toFixed(1)}). Es importante fortalecer el apoyo a población mayor para mantener su calidad de vida.`;
+                            } else {
+                                return `El bienestar se mantiene relativamente estable entre grupos de edad (diferencia de ${diferencia.toFixed(1)} puntos), 
+                                        lo que sugiere factores protectores efectivos en toda la población.`;
+                            }
+                        })()}
+                    </div>
+
+                    <div class="chart-container">
+                        <canvas id="chartISBESexo"></canvas>
+                    </div>
+
+                    <div class="alert alert-warning" style="margin-top: 20px;">
+                        <strong>♀️♂️ Diferencias por sexo en ISBE:</strong> 
+                        ${(() => {
+                            const dif = Math.abs(metrics.isbeMediaH - metrics.isbeMediaM);
+                            const mejor = metrics.isbeMediaH > metrics.isbeMediaM ? 'hombres' : 'mujeres';
+                            const peor = metrics.isbeMediaH < metrics.isbeMediaM ? 'hombres' : 'mujeres';
+                            const valorMejor = Math.max(metrics.isbeMediaH, metrics.isbeMediaM);
+                            const valorPeor = Math.min(metrics.isbeMediaH, metrics.isbeMediaM);
+                            
+                            if (dif < 3) {
+                                return `No se observan diferencias significativas entre sexos (${dif.toFixed(1)} puntos). 
+                                        Ambos grupos presentan niveles similares de bienestar emocional integrado.`;
+                            } else if (dif < 8) {
+                                return `Los ${mejor} presentan un ISBE ligeramente superior (${valorMejor.toFixed(1)} vs ${valorPeor.toFixed(1)}). 
+                                        Esta diferencia de ${dif.toFixed(1)} puntos sugiere <strong>factores de género</strong> que merecen análisis 
+                                        (carga de cuidados, roles sociales, acceso a recursos).`;
+                            } else {
+                                return `Existe una <strong>brecha de género significativa</strong>: ${mejor} tienen ${dif.toFixed(1)} puntos más de ISBE 
+                                        (${valorMejor.toFixed(1)} vs ${valorPeor.toFixed(1)}). Esto requiere <strong>intervenciones con perspectiva de género</strong> 
+                                        que aborden determinantes sociales específicos de ${peor}.`;
+                            }
+                        })()}
+                    </div>
+                </div>
+
+                <!-- AUTOPERCEPCIÓN -->
+                <div class="section">
+                    <div class="section-title">
+                        💭 Autopercepción y Satisfacción Vital
+                    </div>
+                    
+                    <div class="metric-grid">
+                        <div class="metric-card">
+                            <div class="metric-label">Salud Física</div>
+                            <div class="metric-value">${metrics.saludFisicaMedia.toFixed(2)}</div>
+                            <div class="metric-subtitle">sobre 5</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-label">Salud Mental</div>
+                            <div class="metric-value">${metrics.saludMentalMedia.toFixed(2)}</div>
+                            <div class="metric-subtitle">sobre 5</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-label">Satisfacción Vida</div>
+                            <div class="metric-value">${metrics.satisfaccionMedia.toFixed(2)}</div>
+                            <div class="metric-subtitle">sobre 5</div>
+                        </div>
+                    </div>
+
+                    <div class="chart-container">
+                        <canvas id="chartAutopercepcion"></canvas>
+                    </div>
+
+                    <div class="alert alert-info" style="margin-top: 20px;">
+                        <strong>🔍 Perfil de autopercepción:</strong> 
+                        ${(() => {
+                            const valores = [
+                                {nombre: 'Salud Física', valor: metrics.saludFisicaMedia},
+                                {nombre: 'Salud Mental', valor: metrics.saludMentalMedia},
+                                {nombre: 'Satisfacción Vital', valor: metrics.satisfaccionMedia}
+                            ];
+                            const peor = valores.reduce((min, v) => v.valor < min.valor ? v : min, valores[0]);
+                            const mejor = valores.reduce((max, v) => v.valor > max.valor ? v : max, valores[0]);
+                            
+                            let interpretacion = `El indicador más <strong>favorable</strong> es ${mejor.nombre.toLowerCase()} (${mejor.valor.toFixed(2)}/5), 
+                                                 mientras que ${peor.nombre.toLowerCase()} obtiene la valoración más baja (${peor.valor.toFixed(2)}/5). `;
+                            
+                            if (peor.valor < 3.0) {
+                                interpretacion += `La baja puntuación en ${peor.nombre.toLowerCase()} (<strong>${peor.valor.toFixed(2)}/5</strong>) 
+                                                  es preocupante y sugiere necesidad de intervención en este ámbito. `;
+                            } else if (peor.valor < 3.5) {
+                                interpretacion += `${peor.nombre} está en un nivel moderado que requiere atención preventiva. `;
+                            }
+                            
+                            if (Math.max(...valores.map(v => v.valor)) - Math.min(...valores.map(v => v.valor)) < 0.5) {
+                                interpretacion += `Los tres indicadores están <strong>equilibrados</strong>, lo que refleja coherencia en la percepción del bienestar.`;
+                            } else {
+                                interpretacion += `Existe <strong>desequilibrio</strong> entre dimensiones, lo que sugiere áreas específicas de intervención.`;
+                            }
+                            
+                            return interpretacion;
+                        })()}
+                    </div>
+                </div>
+
+                <!-- POBLACIONES PRIORITARIAS -->
+                <div class="section">
+                    <div class="section-title">
+                        🎯 Poblaciones Prioritarias
+                    </div>
+                    
+                    <div class="priority-box">
+                        <div class="priority-title">Grupos que requieren atención especial</div>
+                        <div class="stats-box">
+                            <div class="stat-item" style="border-left-color: #f44336;">
+                                <div class="stat-label">Bajo bienestar WHO-5</div>
+                                <div class="stat-value">${metrics.who5Bajo} (${((metrics.who5Bajo/metrics.n)*100).toFixed(1)}%)</div>
+                            </div>
+                            <div class="stat-item" style="border-left-color: #ff9800;">
+                                <div class="stat-label">Salud mental mala</div>
+                                <div class="stat-value">${metrics.saludMentalMala} (${((metrics.saludMentalMala/metrics.n)*100).toFixed(1)}%)</div>
+                            </div>
+                            <div class="stat-item" style="border-left-color: #ff5722;">
+                                <div class="stat-label">Insatisfacción vital</div>
+                                <div class="stat-value">${metrics.insatisfaccion} (${((metrics.insatisfaccion/metrics.n)*100).toFixed(1)}%)</div>
+                            </div>
+                            <div class="stat-item" style="border-left-color: #c62828;">
+                                <div class="stat-label">ISBE deficiente (<40)</div>
+                                <div class="stat-value">${metrics.isbeBajo} (${((metrics.isbeBajo/metrics.n)*100).toFixed(1)}%)</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    ${generateAgeGroupTable(metrics.gruposEdad)}
+                </div>
+
+                <!-- EXPORTAR -->
+                <div class="section">
+                    <div class="section-title">
+                        📥 Exportar Resultados
+                    </div>
+                    <div class="export-section">
+                        <button class="btn" onclick="exportToPDF()">📄 Descargar Informe PDF</button>
+                        <button class="btn btn-secondary" onclick="exportToExcel()">📊 Exportar a Excel</button>
+                        <button class="btn btn-secondary" onclick="window.print()">🖨️ Imprimir</button>
+                    </div>
+                </div>
+            `;
+            
+            resultsDiv.innerHTML = html;
+        }
+
+        function generateAgeGroupTable(grupos) {
+            let html = '<div class="table-responsive"><table><thead><tr>';
+            html += '<th>Grupo de Edad</th><th>N</th><th>WHO-5 Media</th><th>ISBE Media</th>';
+            html += '<th>Bajo</th><th>Moderado</th><th>Bueno</th><th>Muy Bueno</th>';
+            html += '</tr></thead><tbody>';
+            
+            for (let [grupo, datos] of Object.entries(grupos)) {
+                html += `<tr>
+                    <td><strong>${grupo}</strong></td>
+                    <td>${datos.n}</td>
+                    <td>${datos.who5Media.toFixed(1)}% <small>(±${datos.who5DE.toFixed(1)})</small></td>
+                    <td>${datos.isbeMedia.toFixed(1)} <small>(±${datos.isbeDE.toFixed(1)})</small></td>
+                    <td><span class="badge badge-low">${datos.isbeBajo} (${((datos.isbeBajo/datos.n)*100).toFixed(1)}%)</span></td>
+                    <td><span class="badge badge-moderate">${datos.isbeModerado} (${((datos.isbeModerado/datos.n)*100).toFixed(1)}%)</span></td>
+                    <td><span class="badge badge-good">${datos.isbeBueno} (${((datos.isbeBueno/datos.n)*100).toFixed(1)}%)</span></td>
+                    <td><span class="badge badge-excellent">${datos.isbeMuyBueno} (${((datos.isbeMuyBueno/datos.n)*100).toFixed(1)}%)</span></td>
+                </tr>`;
+            }
+            
+            html += '</tbody></table></div>';
+            return html;
+        }
+
+        function createAllCharts(metrics) {
+            // Destruir gráficos anteriores si existen
+            Object.values(charts).forEach(chart => chart.destroy());
+            charts = {};
+
+            // WHO-5 por edad
+            const grupos = Object.keys(metrics.gruposEdad);
+            const who5PorEdad = grupos.map(g => metrics.gruposEdad[g].who5Media);
+            
+            charts.who5Edad = new Chart(document.getElementById('chartWHO5Edad'), {
+                type: 'line',
+                data: {
+                    labels: grupos,
+                    datasets: [{
+                        label: 'WHO-5 Media (%)',
+                        data: who5PorEdad,
+                        borderColor: '#0051A5',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'WHO-5 por Grupo de Edad',
+                            font: { size: 16, weight: 'bold' }
+                        },
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            title: { display: true, text: 'WHO-5 (%)' }
+                        }
+                    }
+                }
+            });
+
+            // WHO-5 por sexo
+            charts.who5Sexo = new Chart(document.getElementById('chartWHO5Sexo'), {
+                type: 'bar',
+                data: {
+                    labels: ['Hombres', 'Mujeres'],
+                    datasets: [{
+                        label: 'WHO-5 Media (%)',
+                        data: [metrics.who5MediaH, metrics.who5MediaM],
+                        backgroundColor: ['rgba(102, 126, 234, 0.8)', 'rgba(118, 75, 162, 0.8)']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'WHO-5 por Sexo',
+                            font: { size: 16, weight: 'bold' }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            title: { display: true, text: 'WHO-5 (%)' }
+                        }
+                    }
+                }
+            });
+
+            // ISBE distribución
+            charts.isbeDistribucion = new Chart(document.getElementById('chartISBEDistribucion'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Bajo', 'Moderado', 'Bueno', 'Muy Bueno'],
+                    datasets: [{
+                        data: [metrics.isbeBajo, metrics.isbeModerado, metrics.isbeBueno, metrics.isbeMuyBueno],
+                        backgroundColor: ['#f44336', '#ff9800', '#4caf50', '#2196F3']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Distribución de Clasificación ISBE',
+                            font: { size: 16, weight: 'bold' }
+                        },
+                        legend: { position: 'bottom' }
+                    }
+                }
+            });
+
+            // ISBE por edad
+            const isbePorEdad = grupos.map(g => metrics.gruposEdad[g].isbeMedia);
+            
+            charts.isbeEdad = new Chart(document.getElementById('chartISBEEdad'), {
+                type: 'bar',
+                data: {
+                    labels: grupos,
+                    datasets: [{
+                        label: 'ISBE Media',
+                        data: isbePorEdad,
+                        backgroundColor: 'rgba(102, 126, 234, 0.8)',
+                        borderColor: '#0051A5',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'ISBE por Grupo de Edad',
+                            font: { size: 16, weight: 'bold' }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            title: { display: true, text: 'ISBE' }
+                        }
+                    }
+                }
+            });
+
+            // ISBE por sexo - apilado
+            const datosHombres = grupos.map(g => {
+                const hombres = data.filter(r => r.sexo === 0 && getAgeGroup(r.edad) === g);
+                return hombres.length > 0 ? mean(hombres.map(r => r.isbe_total)) : 0;
+            });
+            const datosMujeres = grupos.map(g => {
+                const mujeres = data.filter(r => r.sexo === 1 && getAgeGroup(r.edad) === g);
+                return mujeres.length > 0 ? mean(mujeres.map(r => r.isbe_total)) : 0;
+            });
+
+            charts.isbeSexo = new Chart(document.getElementById('chartISBESexo'), {
+                type: 'bar',
+                data: {
+                    labels: grupos,
+                    datasets: [
+                        {
+                            label: 'Hombres',
+                            data: datosHombres,
+                            backgroundColor: 'rgba(102, 126, 234, 0.8)'
+                        },
+                        {
+                            label: 'Mujeres',
+                            data: datosMujeres,
+                            backgroundColor: 'rgba(118, 75, 162, 0.8)'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'ISBE por Edad y Sexo',
+                            font: { size: 16, weight: 'bold' }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            title: { display: true, text: 'ISBE Media' }
+                        }
+                    }
+                }
+            });
+
+            // Autopercepción
+            charts.autopercepcion = new Chart(document.getElementById('chartAutopercepcion'), {
+                type: 'radar',
+                data: {
+                    labels: ['Salud Física', 'Salud Mental', 'Satisfacción Vida'],
+                    datasets: [{
+                        label: 'Media Poblacional',
+                        data: [
+                            metrics.saludFisicaMedia,
+                            metrics.saludMentalMedia,
+                            metrics.satisfaccionMedia
+                        ],
+                        backgroundColor: 'rgba(102, 126, 234, 0.2)',
+                        borderColor: '#0051A5',
+                        borderWidth: 3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Perfil de Autopercepción (escala 1-5)',
+                            font: { size: 16, weight: 'bold' }
+                        }
+                    },
+                    scales: {
+                        r: {
+                            beginAtZero: true,
+                            max: 5,
+                            ticks: { stepSize: 1 }
+                        }
+                    }
+                }
+            });
+        }
+
+        function getAgeGroup(edad) {
+            if (edad >= 16 && edad <= 24) return '16-24';
+            if (edad >= 25 && edad <= 34) return '25-34';
+            if (edad >= 35 && edad <= 44) return '35-44';
+            if (edad >= 45 && edad <= 54) return '45-54';
+            if (edad >= 55 && edad <= 64) return '55-64';
+            if (edad >= 65 && edad <= 74) return '65-74';
+            return '75+';
+        }
+
+        // Funciones estadísticas
+        function mean(arr) {
+            return arr.reduce((a, b) => a + b, 0) / arr.length;
+        }
+
+        function std(arr) {
+            const avg = mean(arr);
+            const squareDiffs = arr.map(value => Math.pow(value - avg, 2));
+            return Math.sqrt(mean(squareDiffs));
+        }
+
+        function median(arr) {
+            const sorted = [...arr].sort((a, b) => a - b);
+            const mid = Math.floor(sorted.length / 2);
+            return sorted.length % 2 !== 0 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+        }
+
+        function percentile(arr, p) {
+            const sorted = [...arr].sort((a, b) => a - b);
+            const index = (p / 100) * (sorted.length - 1);
+            const lower = Math.floor(index);
+            const upper = Math.ceil(index);
+            const weight = index % 1;
+            return sorted[lower] * (1 - weight) + sorted[upper] * weight;
+        }
+
+        // Funciones de exportación
+        function exportToPDF() {
+            window.print();
+        }
+
+        function exportToExcel() {
+            alert('Funcionalidad de exportación a Excel: Por implementar.\nPor ahora, puedes copiar las tablas y pegarlas en Excel.');
+        }
+    </script>
+
+    <footer style="background: #f8f9fa; border-top: 3px solid #0051A5; padding: 30px 20px; margin-top: 50px; text-align: center; color: #666; font-size: 13px;">
+        <p><strong>I Encuesta Popular de Bienestar Emocional de Atarfe</strong></p>
+        <p style="margin: 10px 0;">Ayuntamiento de Atarfe · Distrito Sanitario Granada-Metropolitano · 2025</p>
+        <p style="margin: 10px 0;">Licencia MIT · Datos: Distrito Sanitario Granada-Metropolitano (REDCap)</p>
+        <p style="margin: 10px 0; font-size: 12px; opacity: 0.7;">Herramienta de análisis · Procesamiento local · Sin tracking</p>
+    </footer>
+</body>
+</html>
